@@ -1,0 +1,22 @@
+body  {
+    text-align: center;
+    padding: 5%;
+}
+
+.note {
+    border: 2px solid lightgray;
+    border-radius: 5px;
+    font-weight: bold;
+    text-align: left;
+    padding: 6px;
+    padding-left: 0px;
+    margin: 30px;
+    margin-left: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    p {
+        width: 80%;
+        margin: 0;
+    }
+}
