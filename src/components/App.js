@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { Component } from 'react';
 import { Form, FormControl, Button, Row } from 'react-bootstrap';
 import { bake_cookie, read_cookie, delete_cookie } from 'sfcookies';
 import uuidv4 from 'uuid/v4';
@@ -9,86 +9,92 @@ import Note from './Note';
 
 const COOKIE_KEY = 'NOTES';
 
-const App = () => {
+class App extends Component {
+  constructor() {
+    super();
 
-    const [text, setText] = useState('');
-    const [notes, setNotes] = useState([]);
-    // const [sort, setSort] = useState('compareAsc');
+    this.state = {
+      text: '',
+      notes: []
+    }
+  }
 
-    useEffect(() => {
-      setNotes(read_cookie(COOKIE_KEY))
-    }, []);
+  componentDidMount() {
+    this.setState({ notes: read_cookie(COOKIE_KEY) });
+  }
 
-    const submit = (e) => {
-      e.preventDefault();
-      if (text !== '') {
-        const noteList = [...notes, { id: uuidv4(), text, createdAt: format(new Date(), 'Pp') }]
-        setNotes(noteList);
+
+  submit(e) {
+    e.preventDefault();
+    const { notes, text } = this.state;
+    if (text !== '') {
+      const noteList = [...notes, { id: uuidv4(), text, createdAt: format(new Date(), 'Pp') }]
+      this.setState({ notes: noteList, text: '' }, () => {
         bake_cookie(COOKIE_KEY, noteList);
-        setText('');
-      }
+      })
+    }
+  }
+
+  deleteNote = (id) => {
+      const notes = this.state.notes.filter(note => note.id !== id);
+      this.setState(prevState => {
+        return {
+          ...prevState,
+          notes,
+        }
+      }, () => {
+          bake_cookie(COOKIE_KEY, notes)
+        });
     }
 
-    const deleteNote = (id) => {
-      const noteList = notes.filter(note => note.id !== id);
-      setNotes(noteList)
-      bake_cookie(COOKIE_KEY, noteList)
-    }
-
-    const renderList = () => {
+    renderList = () => {
       return(
-        notes.map((note, i) => {
+        this.state.notes.map((note, i) => {
           return(
             <Note
               key={`${note.text}${i}`}
               note={note}
-              deleteNote={deleteNote}
+              deleteNote={this.deleteNote}
             />
             );
         })
       );
     }
 
-    const clearList = () => {
-      setNotes([])
+    clearList = () => {
+      this.setState({
+        notes: [],
+      });
       delete_cookie(COOKIE_KEY);
     }
 
-    // const toggleSort = () => {
-    //   const sortValue = sort === 'compareAsc' ? 'compareDesc' : 'compareAsc';
-    //   const noteList = notes.sort((a, b) => {
-    //     console.log(a.createdAt, parse(a.createdAt, new Date()), b.createdAt, parse(b.createdAt, new Date()));
-    //     return sortValue === 'compareAsc' ? compareAsc(parse(a.createdAt, new Date()), parse(b.createdAt, new Date())) : compareDesc(parse(a.createdAt, new Date()), parse(b.createdAt, new Date()));
-    //   })
-    //   console.log(noteList, sortValue);
-    //   setNotes(noteList);
-    //   setSort(sortValue)
-    //   bake_cookie(COOKIE_KEY, noteList)
-    // }
-    return (
-        <>
+    render() {
+      const { notes, text } = this.state;
+      return (
+        <React.Fragment>
           <Row>
             <h2>Note To Self</h2>
           </Row>
           <Row>
             <Form inline>
-                <FormControl onChange={event => setText(event.target.value)} value={text} />
+                <FormControl onChange={event => this.setState({ text: event.target.value })} value={text} />
                   {' '}
                 <Button
                   variant="warning"
-                  onClick={(e) => submit(e)}
+                  onClick={(e) => this.submit(e)}
                 >
                     Submit
                 </Button>
             </Form>
           </Row>
-            {notes.length > 0 && renderList()}
+            {notes.length > 0 && this.renderList()}
             <hr />
-            <Button variant="outline-danger" onClick={() => clearList()}>
+            <Button variant="outline-danger" onClick={() => this.clearList()}>
               Clear Notes
             </Button>
-        </>
+        </React.Fragment>
     );
+  }  
 };
 
 export default App;
